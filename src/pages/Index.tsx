@@ -14,6 +14,7 @@ interface User {
   name: string;
   balance: number;
   email: string;
+  isDemo?: boolean;
 }
 
 const Index = () => {
@@ -22,6 +23,19 @@ const Index = () => {
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  const startDemoMode = () => {
+    setUser({
+      name: 'Демо игрок',
+      balance: 5000,
+      email: 'demo@example.com',
+      isDemo: true
+    });
+    toast({
+      title: 'Демо режим активирован!',
+      description: 'Демо баланс 5000₽. Зарегистрируйтесь для реальной игры',
+    });
+  };
 
   const handleAuth = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,6 +60,15 @@ const Index = () => {
     const formData = new FormData(e.currentTarget);
     const amount = Number(formData.get('amount'));
 
+    if (user?.isDemo) {
+      toast({
+        title: 'Демо режим',
+        description: 'Зарегистрируйтесь для пополнения реальными деньгами',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (user) {
       setUser({ ...user, balance: user.balance + amount });
       setIsDepositOpen(false);
@@ -60,6 +83,15 @@ const Index = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const amount = Number(formData.get('amount'));
+
+    if (user?.isDemo) {
+      toast({
+        title: 'Демо режим',
+        description: 'Зарегистрируйтесь для вывода реальных средств',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (user && user.balance >= amount) {
       setUser({ ...user, balance: user.balance - amount });
@@ -130,7 +162,12 @@ const Index = () => {
                   <Card className="bg-card/50 border-primary/30">
                     <CardContent className="p-3 flex items-center gap-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">Баланс</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">Баланс</p>
+                          {user.isDemo && (
+                            <Badge variant="secondary" className="text-xs">ДЕМО</Badge>
+                          )}
+                        </div>
                         <p className="text-lg font-bold text-accent gold-glow">{user.balance.toLocaleString('ru-RU')} ₽</p>
                       </div>
                     </CardContent>
@@ -218,58 +255,68 @@ const Index = () => {
                   </Button>
                 </>
               ) : (
-                <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-primary hover:bg-primary/90 neon-glow">
-                      <Icon name="LogIn" size={16} className="mr-2" />
-                      Войти
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-card border-primary/30">
-                    <DialogHeader>
-                      <DialogTitle className="text-2xl">
-                        {authMode === 'login' ? 'Вход' : 'Регистрация'}
-                      </DialogTitle>
-                      <DialogDescription>
-                        {authMode === 'login' ? 'Войдите в аккаунт' : 'Создайте новый аккаунт и получите бонус 10000₽'}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAuth} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Имя</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          placeholder="Введите имя"
-                          required
-                          className="bg-input border-primary/30"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="your@email.com"
-                          required
-                          className="bg-input border-primary/30"
-                        />
-                      </div>
-                      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 neon-glow">
-                        {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="border-accent/50 text-accent hover:bg-accent/10"
+                    onClick={startDemoMode}
+                  >
+                    <Icon name="Play" size={16} className="mr-2" />
+                    Демо режим
+                  </Button>
+                  <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-primary hover:bg-primary/90 neon-glow">
+                        <Icon name="LogIn" size={16} className="mr-2" />
+                        Войти
                       </Button>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="w-full"
-                        onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                      >
-                        {authMode === 'login' ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-primary/30">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl">
+                          {authMode === 'login' ? 'Вход' : 'Регистрация'}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {authMode === 'login' ? 'Войдите в аккаунт' : 'Создайте новый аккаунт и получите бонус 10000₽'}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleAuth} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Имя</Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            placeholder="Введите имя"
+                            required
+                            className="bg-input border-primary/30"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="your@email.com"
+                            required
+                            className="bg-input border-primary/30"
+                          />
+                        </div>
+                        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 neon-glow">
+                          {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="w-full"
+                          onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                        >
+                          {authMode === 'login' ? 'Нет аккаунта? Зарегистрируйтесь' : 'Уже есть аккаунт? Войдите'}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             </div>
           </div>
@@ -287,12 +334,23 @@ const Index = () => {
               Получите 100% на первый депозит + 50 фриспинов. Моментальный вывод через СБП!
             </p>
             <div className="flex flex-wrap gap-4">
-              {!user && (
-                <Button size="lg" className="bg-primary hover:bg-primary/90 neon-glow" onClick={() => setIsAuthOpen(true)}>
+              {!user ? (
+                <>
+                  <Button size="lg" className="bg-primary hover:bg-primary/90 neon-glow" onClick={() => setIsAuthOpen(true)}>
+                    <Icon name="Sparkles" size={20} className="mr-2" />
+                    Начать играть
+                  </Button>
+                  <Button size="lg" variant="outline" className="border-accent/50 text-accent" onClick={startDemoMode}>
+                    <Icon name="Play" size={20} className="mr-2" />
+                    Попробовать демо
+                  </Button>
+                </>
+              ) : user.isDemo ? (
+                <Button size="lg" className="bg-primary hover:bg-primary/90 neon-glow" onClick={() => { setUser(null); setIsAuthOpen(true); }}>
                   <Icon name="Sparkles" size={20} className="mr-2" />
-                  Начать играть
+                  Зарегистрироваться для реальной игры
                 </Button>
-              )}
+              ) : null}
               <Button size="lg" variant="outline" className="border-primary/30">
                 <Icon name="Gift" size={20} className="mr-2" />
                 Все бонусы
@@ -360,7 +418,7 @@ const Index = () => {
             <TabsContent value="slots" className="space-y-4">
               <div className="grid md:grid-cols-3 gap-6">
                 {games.slots.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group">
+                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group" onClick={() => !user && startDemoMode()}>
                     <div className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                       <Icon name="Sparkles" size={64} className="text-primary/50 group-hover:text-primary transition-colors" />
                       {game.hot && (
@@ -379,8 +437,8 @@ const Index = () => {
                         <span className="text-xs text-muted-foreground">Джекпот</span>
                         <span className="font-bold text-accent">{game.jackpot}</span>
                       </div>
-                      <Button className="w-full bg-primary hover:bg-primary/90" disabled={!user}>
-                        {user ? 'Играть' : 'Войдите, чтобы играть'}
+                      <Button className="w-full bg-primary hover:bg-primary/90">
+                        {user ? 'Играть' : 'Играть в демо'}
                       </Button>
                     </CardContent>
                   </Card>
@@ -391,7 +449,7 @@ const Index = () => {
             <TabsContent value="roulette" className="space-y-4">
               <div className="grid md:grid-cols-3 gap-6">
                 {games.roulette.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group">
+                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group" onClick={() => !user && startDemoMode()}>
                     <div className="relative h-48 bg-gradient-to-br from-secondary/20 to-accent/20 flex items-center justify-center">
                       <Icon name="Disc3" size={64} className="text-secondary/50 group-hover:text-secondary transition-colors animate-spin-slow" />
                       {game.hot && (
@@ -409,8 +467,8 @@ const Index = () => {
                       <CardDescription>{game.provider}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button className="w-full bg-secondary hover:bg-secondary/90" disabled={!user}>
-                        {user ? 'Играть' : 'Войдите, чтобы играть'}
+                      <Button className="w-full bg-secondary hover:bg-secondary/90">
+                        {user ? 'Играть' : 'Играть в демо'}
                       </Button>
                     </CardContent>
                   </Card>
@@ -421,7 +479,7 @@ const Index = () => {
             <TabsContent value="poker" className="space-y-4">
               <div className="grid md:grid-cols-3 gap-6">
                 {games.poker.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group">
+                  <Card key={game.id} className="bg-card/50 border-primary/30 overflow-hidden game-card-hover cursor-pointer group" onClick={() => !user && startDemoMode()}>
                     <div className="relative h-48 bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
                       <Icon name="Spade" size={64} className="text-accent/50 group-hover:text-accent transition-colors" />
                       {game.hot && (
@@ -440,8 +498,8 @@ const Index = () => {
                         <span className="text-xs text-muted-foreground">Игроков онлайн</span>
                         <span className="font-bold text-primary">{game.players}</span>
                       </div>
-                      <Button className="w-full bg-accent hover:bg-accent/90 gold-glow" disabled={!user}>
-                        {user ? 'Играть' : 'Войдите, чтобы играть'}
+                      <Button className="w-full bg-accent hover:bg-accent/90 gold-glow">
+                        {user ? 'Играть' : 'Играть в демо'}
                       </Button>
                     </CardContent>
                   </Card>
